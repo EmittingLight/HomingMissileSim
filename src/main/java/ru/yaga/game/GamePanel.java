@@ -36,7 +36,7 @@ public class GamePanel extends JPanel {
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                target = new Target(e.getX(), e.getY());
+                target.setPosition(e.getX(), e.getY()); // Передвигаем цель по клику мыши
                 exploded = false; // Сбрасываем взрыв при новом запуске
             }
         });
