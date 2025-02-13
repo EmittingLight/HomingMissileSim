@@ -67,4 +67,8 @@ public class Missile {
     public double getAngle() {
         return angle;
     }
+    public double getFuel() {
+        return this.fuel;
+    }
+
 }

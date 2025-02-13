@@ -16,10 +16,13 @@ public class GamePanel extends JPanel {
     private Image scaledRocketImage;
     private boolean exploded = false;
     private boolean draggingTarget = false;
+    private double lastTargetX, lastTargetY;
 
     public GamePanel() {
         this.missile = new Missile(50, 50);
         this.target = new Target(300, 300);
+        this.lastTargetX = target.getX();
+        this.lastTargetY = target.getY();
 
         try {
             rocketImage = ImageIO.read(getClass().getResource("/img_2.png"));
@@ -97,6 +100,18 @@ public class GamePanel extends JPanel {
             if (missile.hasHitTarget(target)) {
                 exploded = true;
             }
+
+            // Проверяем, сместилась ли цель и хватит ли топлива на манёвр
+            double targetMovement = Math.hypot(lastTargetX - target.getX(), lastTargetY - target.getY());
+            double distanceToTarget = Math.hypot(missile.getX() - target.getX(), missile.getY() - target.getY());
+
+            if (targetMovement > 0 && missile.getFuel() < distanceToTarget / 10) { // Оценка топлива
+                exploded = true; // Самоуничтожение
+                System.out.println("Ракета самоуничтожилась из-за нехватки топлива!");
+            }
+
+            lastTargetX = target.getX();
+            lastTargetY = target.getY();
         }
         repaint();
     }
