@@ -15,6 +15,7 @@ public class GamePanel extends JPanel {
     private Image explosionImage;
     private Image scaledRocketImage;
     private boolean exploded = false;
+    private boolean draggingTarget = false;
 
     public GamePanel() {
         this.missile = new Missile(50, 50);
@@ -35,9 +36,25 @@ public class GamePanel extends JPanel {
 
         addMouseListener(new MouseAdapter() {
             @Override
-            public void mouseClicked(MouseEvent e) {
-                target.setPosition(e.getX(), e.getY()); // Передвигаем цель по клику мыши
-                exploded = false; // Сбрасываем взрыв при новом запуске
+            public void mousePressed(MouseEvent e) {
+                if (Math.hypot(target.getX() - e.getX(), target.getY() - e.getY()) < 10) {
+                    draggingTarget = true;
+                }
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                draggingTarget = false;
+            }
+        });
+
+        addMouseMotionListener(new MouseAdapter() {
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                if (draggingTarget) {
+                    target.setPosition(e.getX(), e.getY());
+                    repaint();
+                }
             }
         });
     }
