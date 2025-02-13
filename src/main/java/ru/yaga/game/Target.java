@@ -20,5 +20,11 @@ public class Target {
     public double getY() {
         return y;
     }
+
+    // Метод для создания копии цели с прогнозируемыми координатами
+    public Target getPredictedTarget(double predictedX, double predictedY) {
+        return new Target(predictedX, predictedY);
+    }
 }
+
 

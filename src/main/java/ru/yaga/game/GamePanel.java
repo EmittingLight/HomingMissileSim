@@ -6,6 +6,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.Queue;
 import javax.imageio.ImageIO;
 
 public class GamePanel extends JPanel {
@@ -18,7 +20,10 @@ public class GamePanel extends JPanel {
     private boolean draggingTarget = false;
     private double lastTargetX, lastTargetY;
     private boolean missileLaunched = false;
-    private static final double LAUNCH_RANGE = 200.0; // Дальность действия радара
+    private static final double LAUNCH_RANGE = 200.0;
+    private static final int HISTORY_SIZE = 5; // Количество кадров для расчёта скорости
+    private Queue<Double> targetXHistory = new LinkedList<>();
+    private Queue<Double> targetYHistory = new LinkedList<>();
 
     public GamePanel() {
         this.missile = new Missile(50, 50);
@@ -28,7 +33,7 @@ public class GamePanel extends JPanel {
 
         try {
             rocketImage = ImageIO.read(getClass().getResource("/img_2.png"));
-            explosionImage = ImageIO.read(getClass().getResource("/img_3.png")); // Загружаем картинку взрыва
+            explosionImage = ImageIO.read(getClass().getResource("/img_3.png"));
             if (rocketImage != null) {
                 scaledRocketImage = rocketImage.getScaledInstance(50, 50, Image.SCALE_SMOOTH);
             } else {
@@ -69,16 +74,13 @@ public class GamePanel extends JPanel {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g;
 
-        // Рисуем цель
         g2d.setColor(Color.BLUE);
         g2d.fillOval((int) target.getX() - 5, (int) target.getY() - 5, 10, 10);
 
-        // Рисуем радиус обнаружения радара
-        g2d.setColor(new Color(0, 255, 0, 100)); // Полупрозрачный зелёный
+        g2d.setColor(new Color(0, 255, 0, 100));
         g2d.drawOval((int) missile.getX() - (int) LAUNCH_RANGE, (int) missile.getY() - (int) LAUNCH_RANGE,
                 (int) LAUNCH_RANGE * 2, (int) LAUNCH_RANGE * 2);
 
-        // Проверяем, произошёл ли взрыв
         if (exploded) {
             if (explosionImage != null) {
                 g2d.drawImage(explosionImage, (int) missile.getX() - 25, (int) missile.getY() - 25, 50, 50, this);
@@ -87,7 +89,6 @@ public class GamePanel extends JPanel {
                 g2d.fillOval((int) missile.getX() - 10, (int) missile.getY() - 10, 20, 20);
             }
         } else {
-            // Рисуем ракету
             if (scaledRocketImage != null) {
                 AffineTransform transform = new AffineTransform();
                 transform.translate(missile.getX() - 25, missile.getY() - 25);
@@ -105,7 +106,7 @@ public class GamePanel extends JPanel {
         double distanceToTarget = Math.hypot(missile.getX() - target.getX(), missile.getY() - target.getY());
 
         // Перед запуском проверяем, хватит ли топлива на перелёт
-        double estimatedFuelCost = distanceToTarget / 10 + 5;
+        double estimatedFuelCost = distanceToTarget / 10 + 5; // Запас топлива с учётом манёвров
         if (!missileLaunched && distanceToTarget <= LAUNCH_RANGE && missile.getFuel() >= estimatedFuelCost) {
             missileLaunched = true;
             System.out.println("Ракета запущена!");
@@ -115,30 +116,40 @@ public class GamePanel extends JPanel {
 
         if (missileLaunched) {
             double targetMovement = Math.hypot(lastTargetX - target.getX(), lastTargetY - target.getY());
-            double fuelRequiredForTurn = Math.abs(missile.getAngleToTarget(target) - missile.getAngle()) * 0.5;
+            double predictedX = target.getX() + (target.getX() - lastTargetX); // Прогноз на основе скорости
+            double predictedY = target.getY() + (target.getY() - lastTargetY);
+            Target predictedTarget = target.getPredictedTarget(predictedX, predictedY); // Создаём прогнозируемую цель
+
+            double fuelRequiredForTurn = Math.abs(missile.getAngleToTarget(predictedTarget) - missile.getAngle()) * 0.5;
             double fuelRequiredForMove = distanceToTarget / 10;
             double totalFuelRequired = fuelRequiredForTurn + fuelRequiredForMove;
 
+            System.out.println("Текущий уровень топлива: " + missile.getFuel());
+            System.out.println("Смещение цели: " + targetMovement);
+            System.out.println("Топлива нужно на манёвр: " + fuelRequiredForTurn);
+            System.out.println("Топлива нужно на движение: " + fuelRequiredForMove);
+            System.out.println("Общий расход топлива: " + totalFuelRequired);
+
             if (totalFuelRequired > missile.getFuel()) {
+                System.out.println("Ракета самоуничтожилась перед манёвром из-за нехватки топлива!");
                 exploded = true;
                 missileLaunched = false;
                 missile.explodeNearTarget(target);
-                System.out.println("Ракета самоуничтожилась перед манёвром из-за нехватки топлива!");
             } else {
-                missile.update(target);
+                missile.update(predictedTarget); // Используем прогнозируемую цель
             }
 
             if (missile.hasHitTarget(target)) {
+                System.out.println("Ракета поразила цель!");
                 exploded = true;
                 missileLaunched = false;
-                System.out.println("Ракета поразила цель!");
             }
 
             if (missile.getFuel() <= 0) {
+                System.out.println("Ракета самоуничтожилась из-за полного расхода топлива!");
                 exploded = true;
                 missileLaunched = false;
                 missile.explodeNearTarget(target);
-                System.out.println("Ракета самоуничтожилась из-за полного расхода топлива!");
             }
 
             lastTargetX = target.getX();
@@ -147,4 +158,5 @@ public class GamePanel extends JPanel {
 
         repaint();
     }
+
 }
