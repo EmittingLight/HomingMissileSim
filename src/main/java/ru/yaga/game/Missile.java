@@ -77,4 +77,8 @@ public class Missile {
         this.x = (this.x + target.getX()) / 2;
         this.y = (this.y + target.getY()) / 2;
     }
+
+    public double getAngleToTarget(Target target) {
+        return Math.atan2(target.getY() - this.y, target.getX() - this.x);
+    }
 }
