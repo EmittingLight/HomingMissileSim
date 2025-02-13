@@ -104,10 +104,13 @@ public class GamePanel extends JPanel {
 
         double distanceToTarget = Math.hypot(missile.getX() - target.getX(), missile.getY() - target.getY());
 
-        // Запуск ракеты, если цель в зоне досягаемости и ракета еще не запускалась
-        if (!missileLaunched && distanceToTarget <= LAUNCH_RANGE) {
+        // Перед запуском проверяем, хватит ли топлива на перелёт
+        double estimatedFuelCost = distanceToTarget / 10 + 5;
+        if (!missileLaunched && distanceToTarget <= LAUNCH_RANGE && missile.getFuel() >= estimatedFuelCost) {
             missileLaunched = true;
             System.out.println("Ракета запущена!");
+        } else if (!missileLaunched && distanceToTarget <= LAUNCH_RANGE) {
+            System.out.println("Запуск отменён – топлива недостаточно!");
         }
 
         if (missileLaunched) {
@@ -116,32 +119,26 @@ public class GamePanel extends JPanel {
             double fuelRequiredForMove = distanceToTarget / 10;
             double totalFuelRequired = fuelRequiredForTurn + fuelRequiredForMove;
 
-            System.out.println("Текущий уровень топлива: " + missile.getFuel());
-            System.out.println("Смещение цели: " + targetMovement);
-            System.out.println("Топлива нужно на манёвр: " + fuelRequiredForTurn);
-            System.out.println("Топлива нужно на движение: " + fuelRequiredForMove);
-            System.out.println("Общий расход топлива: " + totalFuelRequired);
-
             if (totalFuelRequired > missile.getFuel()) {
-                System.out.println("Ракета самоуничтожилась перед манёвром из-за нехватки топлива!");
                 exploded = true;
                 missileLaunched = false;
                 missile.explodeNearTarget(target);
+                System.out.println("Ракета самоуничтожилась перед манёвром из-за нехватки топлива!");
             } else {
                 missile.update(target);
             }
 
             if (missile.hasHitTarget(target)) {
-                System.out.println("Ракета поразила цель!");
                 exploded = true;
                 missileLaunched = false;
+                System.out.println("Ракета поразила цель!");
             }
 
             if (missile.getFuel() <= 0) {
-                System.out.println("Ракета самоуничтожилась из-за полного расхода топлива!");
                 exploded = true;
                 missileLaunched = false;
                 missile.explodeNearTarget(target);
+                System.out.println("Ракета самоуничтожилась из-за полного расхода топлива!");
             }
 
             lastTargetX = target.getX();
