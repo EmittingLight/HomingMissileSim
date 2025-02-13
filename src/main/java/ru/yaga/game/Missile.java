@@ -1,13 +1,5 @@
 package ru.yaga.game;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.geom.AffineTransform;
-import java.io.IOException;
-import javax.imageio.ImageIO;
-
 public class Missile {
     private double x, y; // Координаты ракеты
     private double angle; // Угол направления
@@ -52,7 +44,7 @@ public class Missile {
         x += speed * Math.cos(angle);
         y += speed * Math.sin(angle);
 
-        fuel -= 0.0;
+        fuel -= 0.5;
     }
 
     public boolean hasHitTarget(Target target) {
