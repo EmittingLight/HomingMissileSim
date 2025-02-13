@@ -17,6 +17,8 @@ public class GamePanel extends JPanel {
     private boolean exploded = false;
     private boolean draggingTarget = false;
     private double lastTargetX, lastTargetY;
+    private boolean missileLaunched = false;
+    private static final double LAUNCH_RANGE = 200.0; // Дальность действия радара
 
     public GamePanel() {
         this.missile = new Missile(50, 50);
@@ -71,6 +73,11 @@ public class GamePanel extends JPanel {
         g2d.setColor(Color.BLUE);
         g2d.fillOval((int) target.getX() - 5, (int) target.getY() - 5, 10, 10);
 
+        // Рисуем радиус обнаружения радара
+        g2d.setColor(new Color(0, 255, 0, 100)); // Полупрозрачный зелёный
+        g2d.drawOval((int) missile.getX() - (int) LAUNCH_RANGE, (int) missile.getY() - (int) LAUNCH_RANGE,
+                (int) LAUNCH_RANGE * 2, (int) LAUNCH_RANGE * 2);
+
         // Проверяем, произошёл ли взрыв
         if (exploded) {
             if (explosionImage != null) {
@@ -94,7 +101,15 @@ public class GamePanel extends JPanel {
     }
 
     public void updateGame() {
-        if (!exploded) {
+        double distanceToTarget = Math.hypot(missile.getX() - target.getX(), missile.getY() - target.getY());
+
+        // Запуск ракеты только если цель в зоне досягаемости
+        if (!missileLaunched && distanceToTarget <= LAUNCH_RANGE) {
+            missileLaunched = true;
+            System.out.println("Ракета запущена!");
+        }
+
+        if (missileLaunched && !exploded) {
             missile.update(target);
             // Проверяем, достигла ли ракета цели
             if (missile.hasHitTarget(target)) {
@@ -103,10 +118,8 @@ public class GamePanel extends JPanel {
 
             // Проверяем, сместилась ли цель и хватит ли топлива на манёвр
             double targetMovement = Math.hypot(lastTargetX - target.getX(), lastTargetY - target.getY());
-            double distanceToTarget = Math.hypot(missile.getX() - target.getX(), missile.getY() - target.getY());
-
-            if (targetMovement > 0 && missile.getFuel() < distanceToTarget / 10) { // Оценка топлива
-                exploded = true; // Самоуничтожение
+            if (targetMovement > 0 && missile.getFuel() < distanceToTarget / 10) {
+                exploded = true;
                 System.out.println("Ракета самоуничтожилась из-за нехватки топлива!");
             }
 
