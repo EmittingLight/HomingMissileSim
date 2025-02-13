@@ -67,8 +67,14 @@ public class Missile {
     public double getAngle() {
         return angle;
     }
+
     public double getFuel() {
         return this.fuel;
     }
 
+    public void explodeNearTarget(Target target) {
+        // Взрыв происходит ближе к цели
+        this.x = (this.x + target.getX()) / 2;
+        this.y = (this.y + target.getY()) / 2;
+    }
 }
